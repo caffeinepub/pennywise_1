@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Briefcase, Menu, Search, X } from "lucide-react";
+import { Briefcase, Menu, Search, ShieldCheck, X } from "lucide-react";
 import { useState } from "react";
 import { SiFacebook, SiInstagram, SiLinkedin, SiX } from "react-icons/si";
 import { useInternetIdentity } from "../../hooks/useInternetIdentity";
@@ -54,12 +54,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Link
                 to="/"
                 className="text-sm font-medium transition-colors hover:text-primary"
+                data-ocid="nav.home.link"
               >
                 Home
               </Link>
               <Link
                 to="/contact"
                 className="text-sm font-medium transition-colors hover:text-primary"
+                data-ocid="nav.contact.link"
               >
                 Contact
               </Link>
@@ -67,6 +69,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   to="/provider"
                   className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1"
+                  data-ocid="nav.provider.link"
                 >
                   <Briefcase className="w-4 h-4" />
                   Provider Dashboard
@@ -76,11 +79,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   to="/taker"
                   className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1"
+                  data-ocid="nav.taker.link"
                 >
                   <Search className="w-4 h-4" />
                   Find Services
                 </Link>
               )}
+              <Link
+                to="/admin"
+                className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 text-amber-700"
+                data-ocid="nav.admin.link"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Admin
+              </Link>
             </nav>
           </div>
 
@@ -152,6 +164,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   Find Services
                 </Link>
               )}
+              <Link
+                to="/admin"
+                className="text-sm font-medium flex items-center gap-1 text-amber-700"
+                onClick={() => setMobileMenuOpen(false)}
+                data-ocid="nav.admin.link"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Admin
+              </Link>
             </nav>
           </div>
         )}

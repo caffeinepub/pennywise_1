@@ -1,52 +1,36 @@
 # Pennywise
 
 ## Current State
-
-Pennywise is a service marketplace platform with:
-- A Motoko backend with users, services, bookings, and messaging.
-- A React frontend with Provider and Taker dashboards, a Contact page with a virtual assistant (text message form), and a booking flow.
-- No calling functionality exists. The "communication" feature is limited to sending text messages via `sendMessage`.
+The app has a Provider Dashboard (services, earnings, calendar, messages), a Taker Dashboard (search, booking, payment, review), a HomePage, ContactPage, calling system (CallManagerContext, IncomingCallOverlay, ActiveCallPanel), and profile setup flow. No admin panel exists.
 
 ## Requested Changes (Diff)
 
 ### Add
-
-- **`useCallAgent` hook** (`src/hooks/useCallAgent.ts`): Encapsulates the entire calling lifecycle using a `CallAgent`-style API. Manages:
-  - Initializing a `CallAgent` instance (using WebRTC under the hood).
-  - `startCall(calleeId)` -- initiates an outgoing call.
-  - Incoming call listeners -- detects and surfaces incoming calls via `incomingCall` state.
-  - Call management methods on the active `Call` object: `answerCall()`, `rejectCall()`, `toggleMute()`, `toggleHold()`, `endCall()`.
-  - State exposed: `callState` (`idle | calling | ringing | connected | on-hold`), `isMuted`, `isOnHold`, `incomingCall`, `activeCall`.
-
-- **`CallManagerContext`** (`src/context/CallManagerContext.tsx`): React context that wraps `useCallAgent` and makes calling state and controls available app-wide.
-
-- **`IncomingCallOverlay` component** (`src/components/calling/IncomingCallOverlay.tsx`): Fixed overlay shown when `incomingCall` is set. Displays caller info with Answer and Reject buttons.
-
-- **`ActiveCallPanel` component** (`src/components/calling/ActiveCallPanel.tsx`): Fixed panel shown during an active call. Displays call duration timer, call state badge, and controls: Mute, Hold, End Call.
-
-- **`StartCallButton` component** (`src/components/calling/StartCallButton.tsx`): Reusable button that triggers `startCall()` from context, accepts a `calleeId` prop.
-
-- Wire `CallManagerProvider` into `App.tsx` wrapping the `RouterProvider`.
-- Add `IncomingCallOverlay` and `ActiveCallPanel` into the root layout so they render app-wide.
-- Expose a "Call" action on Provider and Taker dashboards using `StartCallButton`.
+- `/admin` route pointing to a new `AdminDashboard` page
+- Admin navigation link in AppLayout (visible to all for now, or gated by a simple admin flag)
+- `AdminDashboard` page with sidebar navigation and the following sections:
+  - **Overview**: KPI cards — total users, total providers, total takers, total bookings, total revenue, active jobs
+  - **User Management**: table listing all users with columns: name, email, type (provider/taker/both), status, join date, actions (view/suspend)
+  - **Income & Ledger**: income categories table, general ledger entries, vendor income summary — all with mock data
+  - **Job Listings**: table of all service listings across all providers with status, price, category, provider name
+  - **Client Communications**: recent messages/contact submissions log
+  - **Settings**: basic platform configuration fields (platform fee %, support email, maintenance mode toggle)
 
 ### Modify
-
-- `App.tsx`: Wrap app tree with `CallManagerProvider`, render `IncomingCallOverlay` and `ActiveCallPanel` at root level.
-- `ProviderDashboard.tsx`: Add a "Start Call" button for client communication using `StartCallButton`.
-- `TakerDashboard.tsx`: Add a "Call Provider" button on service/provider cards using `StartCallButton`.
+- `App.tsx`: add `adminRoute` for `/admin` path
+- `AppLayout` or nav component: add Admin link
 
 ### Remove
-
-- Nothing removed.
+- Nothing removed
 
 ## Implementation Plan
-
-1. Create `src/hooks/useCallAgent.ts` with full WebRTC-based calling logic modelling the CallAgent pattern (initCall, incomingCall listener, answerCall, rejectCall, toggleMute, toggleHold, endCall).
-2. Create `src/context/CallManagerContext.tsx` providing calling state and methods via React context.
-3. Create `src/components/calling/IncomingCallOverlay.tsx` for incoming call UI.
-4. Create `src/components/calling/ActiveCallPanel.tsx` for in-call controls and timer.
-5. Create `src/components/calling/StartCallButton.tsx` as a reusable trigger component.
-6. Update `App.tsx` to wrap app in `CallManagerProvider` and render overlay/panel globally.
-7. Add `StartCallButton` to `ProviderDashboard` and `TakerDashboard`.
-8. Validate with typecheck and build.
+1. Create `src/frontend/src/pages/AdminDashboard.tsx` with sidebar + section routing using state
+2. Create admin sub-components under `src/frontend/src/components/admin/`:
+   - `AdminOverview.tsx` — KPI cards with mock stats
+   - `AdminUsers.tsx` — user table with search/filter
+   - `AdminIncomeLedger.tsx` — income heads, GL entries, vendor income tabs
+   - `AdminJobListings.tsx` — all services table
+   - `AdminCommunications.tsx` — messages log
+   - `AdminSettings.tsx` — platform settings form
+3. Add `/admin` route to `App.tsx`
+4. Add Admin nav entry to the app navigation

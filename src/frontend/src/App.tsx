@@ -14,6 +14,7 @@ import { Toaster } from "./components/ui/sonner";
 import { CallManagerProvider } from "./context/CallManagerContext";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
 import { useGetCallerUserProfile } from "./hooks/useQueries";
+import AdminDashboard from "./pages/AdminDashboard";
 import BookingConfirmationPage from "./pages/BookingConfirmationPage";
 import ContactPage from "./pages/ContactPage";
 import HomePage from "./pages/HomePage";
@@ -70,6 +71,12 @@ const paymentSuccessRoute = createRoute({
   component: PaymentSuccessPage,
 });
 
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin",
+  component: AdminDashboard,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   contactRoute,
@@ -77,6 +84,7 @@ const routeTree = rootRoute.addChildren([
   takerRoute,
   bookingConfirmationRoute,
   paymentSuccessRoute,
+  adminRoute,
 ]);
 
 const router = createRouter({ routeTree });

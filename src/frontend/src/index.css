@@ -49,6 +49,16 @@
     --sidebar-accent-foreground: 0.35 0.03 30;
     --sidebar-border: 0.88 0.02 45;
     --sidebar-ring: 0.65 0.15 35;
+
+    /* Admin dashboard tokens */
+    --admin-bg: 0.96 0.01 240;
+    --admin-sidebar: 0.22 0.02 255;
+    --admin-sidebar-border: 0.28 0.02 255;
+    --admin-sidebar-text: 0.82 0.01 240;
+    --admin-sidebar-muted: 0.55 0.01 240;
+    --admin-sidebar-hover: 0.3 0.02 255;
+    --admin-heading: 0.2 0.02 255;
+    --admin-card-border: 0.9 0.01 240;
   }
 
   .dark {
@@ -103,5 +113,15 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .admin-card {
+    @apply border border-admin-card-border rounded-xl shadow-xs bg-white overflow-hidden;
+  }
+
+  .admin-kpi-card {
+    @apply border border-admin-card-border rounded-xl shadow-xs bg-white hover:shadow-sm transition-shadow;
   }
 }

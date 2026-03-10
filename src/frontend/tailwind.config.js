@@ -65,6 +65,16 @@ export default {
                     'accent-foreground': 'oklch(var(--sidebar-accent-foreground))',
                     border: 'oklch(var(--sidebar-border))',
                     ring: 'oklch(var(--sidebar-ring))'
+                },
+                admin: {
+                    bg: 'oklch(var(--admin-bg))',
+                    sidebar: 'oklch(var(--admin-sidebar))',
+                    'sidebar-border': 'oklch(var(--admin-sidebar-border))',
+                    'sidebar-text': 'oklch(var(--admin-sidebar-text))',
+                    'sidebar-muted': 'oklch(var(--admin-sidebar-muted))',
+                    'sidebar-hover': 'oklch(var(--admin-sidebar-hover))',
+                    heading: 'oklch(var(--admin-heading))',
+                    'card-border': 'oklch(var(--admin-card-border))'
                 }
             },
             borderRadius: {
@@ -97,4 +107,3 @@ export default {
     },
     plugins: [typography, containerQueries, animate]
 };
-
