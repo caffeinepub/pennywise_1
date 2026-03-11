@@ -1,36 +1,38 @@
 # Pennywise
 
 ## Current State
-The app has a Provider Dashboard (services, earnings, calendar, messages), a Taker Dashboard (search, booking, payment, review), a HomePage, ContactPage, calling system (CallManagerContext, IncomingCallOverlay, ActiveCallPanel), and profile setup flow. No admin panel exists.
+The app has a Motoko backend with core entities (providers, takers, services, bookings, messages, availability) and a React frontend. Several frontend components are wired to the backend (ServiceSearch, ServiceListings, ProviderCalendar, BookingFlow). However, key sections still use hardcoded mock/static data:
+- `EarningsDashboard` — shows static $0.00 values, no backend connection
+- `AdminDashboard` — all KPI cards, user tables, income ledger, job listings, and communications use hardcoded arrays
+- `MessageCenter` — uses DEMO_CLIENTS array; conversations section shows empty state with no real data
+
+The backend lacks endpoints for: provider earnings/bookings retrieval, admin stats, listing all users, listing all bookings.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `/admin` route pointing to a new `AdminDashboard` page
-- Admin navigation link in AppLayout (visible to all for now, or gated by a simple admin flag)
-- `AdminDashboard` page with sidebar navigation and the following sections:
-  - **Overview**: KPI cards — total users, total providers, total takers, total bookings, total revenue, active jobs
-  - **User Management**: table listing all users with columns: name, email, type (provider/taker/both), status, join date, actions (view/suspend)
-  - **Income & Ledger**: income categories table, general ledger entries, vendor income summary — all with mock data
-  - **Job Listings**: table of all service listings across all providers with status, price, category, provider name
-  - **Client Communications**: recent messages/contact submissions log
-  - **Settings**: basic platform configuration fields (platform fee %, support email, maintenance mode toggle)
+- Backend: `getBookingsForProvider` — returns all bookings where caller is the provider
+- Backend: `getAdminStats` — admin-only, returns counts (totalUsers, totalProviders, totalTakers, totalBookings, totalRevenue)
+- Backend: `getAllUsers` — admin-only, returns list of (Principal, UserProfile) pairs
+- Backend: `getAllBookings` — admin-only, returns all bookings with IDs
+- Backend: `getBookingsForTaker` — returns all bookings where caller is the taker
+- Frontend hooks: `useGetBookingsForProvider`, `useGetAdminStats`, `useGetAllUsers`, `useGetAllBookings`
 
 ### Modify
-- `App.tsx`: add `adminRoute` for `/admin` path
-- `AppLayout` or nav component: add Admin link
+- `EarningsDashboard` — wire to `useGetBookingsForProvider` to compute total earnings, monthly earnings, and completed job count; show real booking history
+- `AdminDashboard` — wire Overview KPIs to `useGetAdminStats`; wire User Management table to `useGetAllUsers`; wire Job Listings to `getAllServices`; leave Income Ledger/Vendor sections as illustrative (no ledger in backend)
+- `MessageCenter` — wire Conversations section to show real messages from `getMessagesWithUser` per provider's clients (derived from bookings)
 
 ### Remove
-- Nothing removed
+- Hardcoded mock arrays in `EarningsDashboard` (implicit — currently static values replaced with real data)
+- Hardcoded `KPI_CARDS`, `USERS_DATA`, `JOB_LISTINGS` in `AdminDashboard`
+- `DEMO_CLIENTS` array in `MessageCenter`
 
 ## Implementation Plan
-1. Create `src/frontend/src/pages/AdminDashboard.tsx` with sidebar + section routing using state
-2. Create admin sub-components under `src/frontend/src/components/admin/`:
-   - `AdminOverview.tsx` — KPI cards with mock stats
-   - `AdminUsers.tsx` — user table with search/filter
-   - `AdminIncomeLedger.tsx` — income heads, GL entries, vendor income tabs
-   - `AdminJobListings.tsx` — all services table
-   - `AdminCommunications.tsx` — messages log
-   - `AdminSettings.tsx` — platform settings form
-3. Add `/admin` route to `App.tsx`
-4. Add Admin nav entry to the app navigation
+1. Update `main.mo` to add `getBookingsForProvider`, `getBookingsForTaker`, `getAdminStats`, `getAllUsers`, `getAllBookings`
+2. Regenerate backend bindings
+3. Add new query hooks in `useQueries.ts`
+4. Rewrite `EarningsDashboard` to use real provider bookings data
+5. Rewrite `AdminDashboard` Overview and User Management sections to pull from backend
+6. Wire Job Listings section in AdminDashboard to real services from backend
+7. Wire MessageCenter Conversations to real message threads derived from provider bookings

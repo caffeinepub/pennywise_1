@@ -25,6 +25,17 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const Time = IDL.Int;
+export const Booking = IDL.Record({
+  'id' : IDL.Text,
+  'service' : IDL.Text,
+  'startTime' : Time,
+  'taker' : IDL.Principal,
+  'provider' : IDL.Principal,
+  'endTime' : Time,
+  'completed' : IDL.Bool,
+  'price' : IDL.Nat,
+});
 export const Service = IDL.Record({
   'title' : IDL.Text,
   'duration' : IDL.Nat,
@@ -42,12 +53,15 @@ export const UserProfile = IDL.Record({
   'contactInfo' : IDL.Text,
   'name' : IDL.Text,
 });
-export const Time = IDL.Int;
 export const Message = IDL.Record({
   'content' : IDL.Text,
   'sender' : IDL.Principal,
   'timestamp' : Time,
   'receiver' : IDL.Principal,
+});
+export const ProviderAvailability = IDL.Record({
+  'provider' : IDL.Principal,
+  'availableSlots' : IDL.Vec(IDL.Text),
 });
 export const ServiceProvider = IDL.Record({
   'contactInfo' : IDL.Text,
@@ -95,12 +109,50 @@ export const idlService = IDL.Service({
       [IDL.Vec(IDL.Text)],
       ['query'],
     ),
+  'getAdminStats' : IDL.Func(
+      [],
+      [
+        IDL.Record({
+          'totalTakers' : IDL.Nat,
+          'totalBookings' : IDL.Nat,
+          'totalProviders' : IDL.Nat,
+          'totalUsers' : IDL.Nat,
+          'totalRevenue' : IDL.Nat,
+        }),
+      ],
+      ['query'],
+    ),
+  'getAllBookings' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Text, Booking))],
+      ['query'],
+    ),
   'getAllServices' : IDL.Func([], [IDL.Vec(Service)], ['query']),
+  'getAllUsers' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Principal, UserProfile))],
+      ['query'],
+    ),
+  'getBookingsForProvider' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Text, Booking))],
+      ['query'],
+    ),
+  'getBookingsForTaker' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Text, Booking))],
+      ['query'],
+    ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getMessagesWithUser' : IDL.Func(
       [IDL.Principal],
       [IDL.Vec(Message)],
+      ['query'],
+    ),
+  'getProviderAvailabilities' : IDL.Func(
+      [],
+      [IDL.Vec(ProviderAvailability)],
       ['query'],
     ),
   'getProviderAvailability' : IDL.Func(
@@ -147,6 +199,17 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const Time = IDL.Int;
+  const Booking = IDL.Record({
+    'id' : IDL.Text,
+    'service' : IDL.Text,
+    'startTime' : Time,
+    'taker' : IDL.Principal,
+    'provider' : IDL.Principal,
+    'endTime' : Time,
+    'completed' : IDL.Bool,
+    'price' : IDL.Nat,
+  });
   const Service = IDL.Record({
     'title' : IDL.Text,
     'duration' : IDL.Nat,
@@ -164,12 +227,15 @@ export const idlFactory = ({ IDL }) => {
     'contactInfo' : IDL.Text,
     'name' : IDL.Text,
   });
-  const Time = IDL.Int;
   const Message = IDL.Record({
     'content' : IDL.Text,
     'sender' : IDL.Principal,
     'timestamp' : Time,
     'receiver' : IDL.Principal,
+  });
+  const ProviderAvailability = IDL.Record({
+    'provider' : IDL.Principal,
+    'availableSlots' : IDL.Vec(IDL.Text),
   });
   const ServiceProvider = IDL.Record({
     'contactInfo' : IDL.Text,
@@ -217,12 +283,50 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(IDL.Text)],
         ['query'],
       ),
+    'getAdminStats' : IDL.Func(
+        [],
+        [
+          IDL.Record({
+            'totalTakers' : IDL.Nat,
+            'totalBookings' : IDL.Nat,
+            'totalProviders' : IDL.Nat,
+            'totalUsers' : IDL.Nat,
+            'totalRevenue' : IDL.Nat,
+          }),
+        ],
+        ['query'],
+      ),
+    'getAllBookings' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Text, Booking))],
+        ['query'],
+      ),
     'getAllServices' : IDL.Func([], [IDL.Vec(Service)], ['query']),
+    'getAllUsers' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Principal, UserProfile))],
+        ['query'],
+      ),
+    'getBookingsForProvider' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Text, Booking))],
+        ['query'],
+      ),
+    'getBookingsForTaker' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Text, Booking))],
+        ['query'],
+      ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getMessagesWithUser' : IDL.Func(
         [IDL.Principal],
         [IDL.Vec(Message)],
+        ['query'],
+      ),
+    'getProviderAvailabilities' : IDL.Func(
+        [],
+        [IDL.Vec(ProviderAvailability)],
         ['query'],
       ),
     'getProviderAvailability' : IDL.Func(

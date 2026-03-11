@@ -1,4 +1,6 @@
-import { Calendar, DollarSign, TrendingUp } from "lucide-react";
+import { Calendar, DollarSign, Loader2, TrendingUp } from "lucide-react";
+import { useGetBookingsForProvider } from "../../hooks/useQueries";
+import { Badge } from "../ui/badge";
 import {
   Card,
   CardContent,
@@ -6,8 +8,44 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
+import { Skeleton } from "../ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+
+function formatPrice(price: bigint): string {
+  return `$${Number(price).toFixed(2)}`;
+}
+
+function formatDate(ns: bigint): string {
+  return new Date(Number(ns / 1_000_000n)).toLocaleDateString();
+}
 
 export default function EarningsDashboard() {
+  const { data: bookingPairs, isLoading } = useGetBookingsForProvider();
+
+  const bookings = (bookingPairs ?? []).map(([, b]) => b);
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const totalEarnings = bookings.reduce((sum, b) => sum + Number(b.price), 0);
+
+  const monthlyEarnings = bookings
+    .filter((b) => {
+      const d = new Date(Number(b.startTime / 1_000_000n));
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    })
+    .reduce((sum, b) => sum + Number(b.price), 0);
+
+  const completedJobs = bookings.filter((b) => b.completed).length;
+
   return (
     <div className="space-y-6">
       <div>
@@ -26,7 +64,14 @@ export default function EarningsDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$0.00</div>
+            {isLoading ? (
+              <Skeleton
+                className="h-8 w-24"
+                data-ocid="earnings.total.loading_state"
+              />
+            ) : (
+              <div className="text-2xl font-bold">{`$${totalEarnings.toFixed(2)}`}</div>
+            )}
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
@@ -37,8 +82,12 @@ export default function EarningsDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$0.00</div>
-            <p className="text-xs text-muted-foreground">+0% from last month</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <div className="text-2xl font-bold">{`$${monthlyEarnings.toFixed(2)}`}</div>
+            )}
+            <p className="text-xs text-muted-foreground">Current month</p>
           </CardContent>
         </Card>
 
@@ -50,7 +99,11 @@ export default function EarningsDashboard() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{completedJobs}</div>
+            )}
             <p className="text-xs text-muted-foreground">Total bookings</p>
           </CardContent>
         </Card>
@@ -59,15 +112,67 @@ export default function EarningsDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Recent Transactions</CardTitle>
-          <CardDescription>
-            Your latest completed bookings and payments
-          </CardDescription>
+          <CardDescription>Your latest bookings and payments</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            No transactions yet. Complete your first booking to see earnings
-            here.
-          </div>
+          {isLoading ? (
+            <div
+              className="flex items-center justify-center py-8 gap-2 text-muted-foreground"
+              data-ocid="earnings.transactions.loading_state"
+            >
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Loading transactions…</span>
+            </div>
+          ) : bookings.length === 0 ? (
+            <div
+              className="text-center py-8 text-muted-foreground"
+              data-ocid="earnings.transactions.empty_state"
+            >
+              No transactions yet. Complete your first booking to see earnings
+              here.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody data-ocid="earnings.transactions.table">
+                {bookings.map((booking, i) => (
+                  <TableRow
+                    key={booking.id}
+                    data-ocid={`earnings.transactions.row.${i + 1}`}
+                  >
+                    <TableCell className="font-medium">
+                      {booking.service}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {formatDate(booking.startTime)}
+                    </TableCell>
+                    <TableCell className="font-semibold text-emerald-700">
+                      {formatPrice(booking.price)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          booking.completed
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        }
+                      >
+                        {booking.completed ? "Completed" : "Pending"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

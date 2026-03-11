@@ -10,12 +10,26 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface Booking {
+  'id' : string,
+  'service' : string,
+  'startTime' : Time,
+  'taker' : Principal,
+  'provider' : Principal,
+  'endTime' : Time,
+  'completed' : boolean,
+  'price' : bigint,
+}
 export type ExternalBlob = Uint8Array;
 export interface Message {
   'content' : string,
   'sender' : Principal,
   'timestamp' : Time,
   'receiver' : Principal,
+}
+export interface ProviderAvailability {
+  'provider' : Principal,
+  'availableSlots' : Array<string>,
 }
 export interface Service {
   'title' : string,
@@ -77,10 +91,25 @@ export interface _SERVICE {
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'completeBooking' : ActorMethod<[string], undefined>,
   'findProvidersByService' : ActorMethod<[string], Array<string>>,
+  'getAdminStats' : ActorMethod<
+    [],
+    {
+      'totalTakers' : bigint,
+      'totalBookings' : bigint,
+      'totalProviders' : bigint,
+      'totalUsers' : bigint,
+      'totalRevenue' : bigint,
+    }
+  >,
+  'getAllBookings' : ActorMethod<[], Array<[string, Booking]>>,
   'getAllServices' : ActorMethod<[], Array<Service>>,
+  'getAllUsers' : ActorMethod<[], Array<[Principal, UserProfile]>>,
+  'getBookingsForProvider' : ActorMethod<[], Array<[string, Booking]>>,
+  'getBookingsForTaker' : ActorMethod<[], Array<[string, Booking]>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getMessagesWithUser' : ActorMethod<[Principal], Array<Message>>,
+  'getProviderAvailabilities' : ActorMethod<[], Array<ProviderAvailability>>,
   'getProviderAvailability' : ActorMethod<[Principal], Array<string>>,
   'getProviders' : ActorMethod<[], Array<ServiceProvider>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,

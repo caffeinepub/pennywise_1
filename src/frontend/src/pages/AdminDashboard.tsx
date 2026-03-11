@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -35,6 +36,11 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import {
+  useGetAdminStats,
+  useGetAllServices,
+  useGetAllUsers,
+} from "../hooks/useQueries";
 
 type Section =
   | "overview"
@@ -73,57 +79,6 @@ const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
 ];
 
-const KPI_CARDS = [
-  {
-    title: "Total Users",
-    value: "1,284",
-    change: "+12%",
-    up: true,
-    icon: <Users className="w-5 h-5" />,
-    color: "text-blue-600",
-  },
-  {
-    title: "Total Providers",
-    value: "438",
-    change: "+8%",
-    up: true,
-    icon: <UserCheck className="w-5 h-5" />,
-    color: "text-emerald-600",
-  },
-  {
-    title: "Total Takers",
-    value: "846",
-    change: "+15%",
-    up: true,
-    icon: <Search className="w-5 h-5" />,
-    color: "text-violet-600",
-  },
-  {
-    title: "Active Jobs",
-    value: "217",
-    change: "-3%",
-    up: false,
-    icon: <Briefcase className="w-5 h-5" />,
-    color: "text-amber-600",
-  },
-  {
-    title: "Total Bookings",
-    value: "5,902",
-    change: "+24%",
-    up: true,
-    icon: <BookOpen className="w-5 h-5" />,
-    color: "text-rose-600",
-  },
-  {
-    title: "Total Revenue",
-    value: "$128,450",
-    change: "+18%",
-    up: true,
-    icon: <DollarSign className="w-5 h-5" />,
-    color: "text-teal-600",
-  },
-];
-
 const ACTIVITY_FEED = [
   {
     user: "Sarah Mitchell",
@@ -160,79 +115,6 @@ const ACTIVITY_FEED = [
     action: "registered as a new Taker",
     time: "3 hr ago",
     type: "join",
-  },
-];
-
-const USERS_DATA = [
-  {
-    name: "Sarah Mitchell",
-    email: "sarah.m@email.com",
-    type: "Taker",
-    status: "Active",
-    joined: "Jan 12, 2025",
-  },
-  {
-    name: "James Carter",
-    email: "james.c@email.com",
-    type: "Provider",
-    status: "Active",
-    joined: "Mar 3, 2025",
-  },
-  {
-    name: "Carlos Rivera",
-    email: "carlos.r@email.com",
-    type: "Provider",
-    status: "Active",
-    joined: "Apr 28, 2025",
-  },
-  {
-    name: "Emma Thompson",
-    email: "emma.t@email.com",
-    type: "Both",
-    status: "Active",
-    joined: "Feb 17, 2025",
-  },
-  {
-    name: "Priya Sharma",
-    email: "priya.s@email.com",
-    type: "Provider",
-    status: "Active",
-    joined: "May 9, 2025",
-  },
-  {
-    name: "David Park",
-    email: "david.p@email.com",
-    type: "Taker",
-    status: "Active",
-    joined: "Jun 1, 2025",
-  },
-  {
-    name: "Natalie Brooks",
-    email: "natalie.b@email.com",
-    type: "Taker",
-    status: "Active",
-    joined: "Jun 15, 2025",
-  },
-  {
-    name: "lspam2024",
-    email: "spammy@disposable.io",
-    type: "Taker",
-    status: "Suspended",
-    joined: "Jun 20, 2025",
-  },
-  {
-    name: "Alex Nguyen",
-    email: "alex.n@email.com",
-    type: "Both",
-    status: "Active",
-    joined: "Jul 2, 2025",
-  },
-  {
-    name: "Jessica Flores",
-    email: "jess.f@email.com",
-    type: "Provider",
-    status: "Active",
-    joined: "Jul 10, 2025",
   },
 ];
 
@@ -358,73 +240,6 @@ const VENDOR_INCOME = [
   },
 ];
 
-const JOB_LISTINGS = [
-  {
-    title: "Full-Stack Web Development",
-    provider: "Alex Nguyen",
-    category: "Development",
-    price: "$120/hr",
-    status: "Active",
-    created: "May 10, 2025",
-  },
-  {
-    title: "UI/UX Design Sprint",
-    provider: "James Carter",
-    category: "Design",
-    price: "$90/hr",
-    status: "Active",
-    created: "May 22, 2025",
-  },
-  {
-    title: "SEO Audit & Strategy",
-    provider: "Priya Sharma",
-    category: "Marketing",
-    price: "$350/mo",
-    status: "Active",
-    created: "Jun 1, 2025",
-  },
-  {
-    title: "Instagram Growth Management",
-    provider: "Jessica Flores",
-    category: "Marketing",
-    price: "$500/mo",
-    status: "Inactive",
-    created: "Jun 5, 2025",
-  },
-  {
-    title: "Business Strategy Consulting",
-    provider: "Carlos Rivera",
-    category: "Consulting",
-    price: "$200/hr",
-    status: "Active",
-    created: "Jun 12, 2025",
-  },
-  {
-    title: "Technical Writing Services",
-    provider: "Emma Thompson",
-    category: "Writing",
-    price: "$75/hr",
-    status: "Active",
-    created: "Jun 20, 2025",
-  },
-  {
-    title: "Logo & Brand Identity",
-    provider: "James Carter",
-    category: "Design",
-    price: "$1,200 flat",
-    status: "Active",
-    created: "Jul 1, 2025",
-  },
-  {
-    title: "WordPress Site Setup",
-    provider: "Natalie Brooks",
-    category: "Development",
-    price: "$800 flat",
-    status: "Inactive",
-    created: "Jul 5, 2025",
-  },
-];
-
 const COMMUNICATIONS = [
   {
     from: "Sarah Mitchell",
@@ -505,7 +320,9 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${variants[status] ?? "bg-gray-100 text-gray-600"}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+        variants[status] ?? "bg-gray-100 text-gray-600"
+      }`}
     >
       {status}
     </span>
@@ -524,6 +341,61 @@ function getInitials(name: string) {
 // ── Sections ──────────────────────────────────────────────────────────────────
 
 function OverviewSection() {
+  const { data: stats, isLoading } = useGetAdminStats();
+
+  const kpiCards = [
+    {
+      title: "Total Users",
+      value: isLoading
+        ? null
+        : stats
+          ? Number(stats.totalUsers).toLocaleString()
+          : "—",
+      icon: <Users className="w-5 h-5" />,
+      color: "text-blue-600",
+    },
+    {
+      title: "Total Providers",
+      value: isLoading
+        ? null
+        : stats
+          ? Number(stats.totalProviders).toLocaleString()
+          : "—",
+      icon: <UserCheck className="w-5 h-5" />,
+      color: "text-emerald-600",
+    },
+    {
+      title: "Total Takers",
+      value: isLoading
+        ? null
+        : stats
+          ? Number(stats.totalTakers).toLocaleString()
+          : "—",
+      icon: <Search className="w-5 h-5" />,
+      color: "text-violet-600",
+    },
+    {
+      title: "Total Bookings",
+      value: isLoading
+        ? null
+        : stats
+          ? Number(stats.totalBookings).toLocaleString()
+          : "—",
+      icon: <BookOpen className="w-5 h-5" />,
+      color: "text-rose-600",
+    },
+    {
+      title: "Total Revenue",
+      value: isLoading
+        ? null
+        : stats
+          ? `$${Number(stats.totalRevenue).toLocaleString()}`
+          : "—",
+      icon: <DollarSign className="w-5 h-5" />,
+      color: "text-teal-600",
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <div>
@@ -536,7 +408,7 @@ function OverviewSection() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-        {KPI_CARDS.map((kpi, i) => (
+        {kpiCards.map((kpi, i) => (
           <Card
             key={kpi.title}
             className="admin-kpi-card"
@@ -548,27 +420,28 @@ function OverviewSection() {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                     {kpi.title}
                   </p>
-                  <p className="text-3xl font-bold text-admin-heading">
-                    {kpi.value}
-                  </p>
+                  {isLoading ? (
+                    <Skeleton
+                      className="h-9 w-24 mt-1"
+                      data-ocid={`overview.card.${i + 1}.loading_state`}
+                    />
+                  ) : (
+                    <p className="text-3xl font-bold text-admin-heading">
+                      {kpi.value}
+                    </p>
+                  )}
                 </div>
                 <div className={`p-2.5 rounded-xl bg-muted/60 ${kpi.color}`}>
                   {kpi.icon}
                 </div>
               </div>
               <div className="mt-4 flex items-center gap-1">
-                {kpi.up ? (
-                  <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
-                ) : (
-                  <ArrowDownRight className="w-3.5 h-3.5 text-red-500" />
-                )}
-                <span
-                  className={`text-xs font-semibold ${kpi.up ? "text-emerald-600" : "text-red-500"}`}
-                >
-                  {kpi.change}
+                <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-xs font-semibold text-emerald-600">
+                  Live
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  vs last month
+                  real-time data
                 </span>
               </div>
             </CardContent>
@@ -614,13 +487,22 @@ function OverviewSection() {
 function UserManagementSection() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const { data: allUsers, isLoading } = useGetAllUsers();
 
-  const filtered = USERS_DATA.filter((u) => {
+  const users = (allUsers ?? []).map(([principal, profile]) => ({
+    principal: principal.toString(),
+    name: profile.name,
+    contactInfo: profile.contactInfo,
+    userType: profile.userType as string,
+  }));
+
+  const filtered = users.filter((u) => {
     const matchSearch =
       u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
+      u.contactInfo.toLowerCase().includes(search.toLowerCase()) ||
+      u.principal.toLowerCase().includes(search.toLowerCase());
     const matchFilter =
-      filter === "All" || u.type === filter || u.status === filter;
+      filter === "All" || u.userType.toLowerCase() === filter.toLowerCase();
     return matchSearch && matchFilter;
   });
 
@@ -639,7 +521,7 @@ function UserManagementSection() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name or email…"
+            placeholder="Search by name, contact, or principal…"
             className="pl-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -647,89 +529,104 @@ function UserManagementSection() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {["All", "Provider", "Taker", "Both", "Active", "Suspended"].map(
-            (f) => (
-              <Button
-                key={f}
-                variant={filter === f ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilter(f)}
-                data-ocid="users.filter.tab"
-              >
-                {f}
-              </Button>
-            ),
-          )}
+          {["All", "provider", "taker", "both"].map((f) => (
+            <Button
+              key={f}
+              variant={filter === f ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter(f)}
+              data-ocid="users.filter.tab"
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </Button>
+          ))}
         </div>
       </div>
 
       <Card className="admin-card">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead>User</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Join Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody data-ocid="users.table">
-            {filtered.map((user, i) => (
-              <TableRow key={user.email} data-ocid={`users.row.${i + 1}`}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                        {getInitials(user.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium text-sm">{user.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {user.email}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="text-xs">
-                    {user.type}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={user.status} />
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {user.joined}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2"
-                      data-ocid={`users.edit_button.${i + 1}`}
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className={`h-7 px-2 ${user.status === "Suspended" ? "text-emerald-600 hover:text-emerald-700" : "text-red-500 hover:text-red-600"}`}
-                      data-ocid={`users.delete_button.${i + 1}`}
-                    >
-                      {user.status === "Suspended" ? (
-                        <CheckCircle className="w-3.5 h-3.5" />
-                      ) : (
-                        <Ban className="w-3.5 h-3.5" />
-                      )}
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+        {isLoading ? (
+          <div className="p-6 space-y-3" data-ocid="users.table.loading_state">
+            {[1, 2, 3, 4].map((n) => (
+              <Skeleton key={n} className="h-10 w-full" />
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30">
+                <TableHead>User</TableHead>
+                <TableHead>Principal</TableHead>
+                <TableHead>Contact Info</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody data-ocid="users.table">
+              {filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-muted-foreground"
+                    data-ocid="users.empty_state"
+                  >
+                    No users found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((user, i) => (
+                  <TableRow
+                    key={user.principal}
+                    data-ocid={`users.row.${i + 1}`}
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                            {getInitials(user.name || "??")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium text-sm">
+                          {user.name || "—"}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground font-mono">
+                      {`${user.principal.slice(0, 8)}…`}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {user.contactInfo || "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {user.userType}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          data-ocid={`users.edit_button.${i + 1}`}
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-red-500 hover:text-red-600"
+                          data-ocid={`users.delete_button.${i + 1}`}
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </div>
   );
@@ -894,9 +791,7 @@ function IncomeLedgerSection() {
 }
 
 function JobListingsSection() {
-  const [statuses, setStatuses] = useState<Record<number, string>>(
-    Object.fromEntries(JOB_LISTINGS.map((j, i) => [i, j.status])),
-  );
+  const { data: services, isLoading } = useGetAllServices();
 
   return (
     <div className="space-y-6">
@@ -910,74 +805,72 @@ function JobListingsSection() {
       </div>
 
       <Card className="admin-card">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead>Title</TableHead>
-              <TableHead>Provider</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody data-ocid="jobs.table">
-            {JOB_LISTINGS.map((job, i) => (
-              <TableRow
-                key={`${job.title}-${i}`}
-                data-ocid={`jobs.row.${i + 1}`}
-              >
-                <TableCell className="font-medium text-sm max-w-[180px] truncate">
-                  {job.title}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {job.provider}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="text-xs">
-                    {job.category}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-sm font-medium">
-                  {job.price}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={statuses[i]} />
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {job.created}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2"
-                      data-ocid={`jobs.edit_button.${i + 1}`}
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 px-2 text-xs"
-                      onClick={() =>
-                        setStatuses((prev) => ({
-                          ...prev,
-                          [i]: prev[i] === "Active" ? "Inactive" : "Active",
-                        }))
-                      }
-                      data-ocid={`jobs.toggle.${i + 1}`}
-                    >
-                      {statuses[i] === "Active" ? "Deactivate" : "Activate"}
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+        {isLoading ? (
+          <div className="p-6 space-y-3" data-ocid="jobs.table.loading_state">
+            {[1, 2, 3, 4].map((n) => (
+              <Skeleton key={n} className="h-10 w-full" />
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30">
+                <TableHead>Title</TableHead>
+                <TableHead>Provider</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody data-ocid="jobs.table">
+              {!services || services.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-8 text-muted-foreground"
+                    data-ocid="jobs.empty_state"
+                  >
+                    No services listed yet
+                  </TableCell>
+                </TableRow>
+              ) : (
+                services.map((svc, i) => (
+                  <TableRow
+                    key={`${svc.title}-${i}`}
+                    data-ocid={`jobs.row.${i + 1}`}
+                  >
+                    <TableCell className="font-medium text-sm max-w-[180px] truncate">
+                      {svc.title}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground font-mono">
+                      {`${svc.provider.toString().slice(0, 8)}…`}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate">
+                      {svc.description}
+                    </TableCell>
+                    <TableCell className="text-sm font-medium">
+                      {`$${Number(svc.price)}`}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status="Active" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2"
+                        data-ocid={`jobs.edit_button.${i + 1}`}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </div>
   );

@@ -14,6 +14,10 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
+export interface ProviderAvailability {
+    provider: Principal;
+    availableSlots: Array<string>;
+}
 export type Time = bigint;
 export interface Service {
     title: string;
@@ -27,6 +31,16 @@ export interface Message {
     sender: Principal;
     timestamp: Time;
     receiver: Principal;
+}
+export interface Booking {
+    id: string;
+    service: string;
+    startTime: Time;
+    taker: Principal;
+    provider: Principal;
+    endTime: Time;
+    completed: boolean;
+    price: bigint;
 }
 export interface ServiceProvider {
     contactInfo: string;
@@ -58,10 +72,22 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     completeBooking(bookingId: string): Promise<void>;
     findProvidersByService(serviceCategory: string): Promise<Array<string>>;
+    getAdminStats(): Promise<{
+        totalTakers: bigint;
+        totalBookings: bigint;
+        totalProviders: bigint;
+        totalUsers: bigint;
+        totalRevenue: bigint;
+    }>;
+    getAllBookings(): Promise<Array<[string, Booking]>>;
     getAllServices(): Promise<Array<Service>>;
+    getAllUsers(): Promise<Array<[Principal, UserProfile]>>;
+    getBookingsForProvider(): Promise<Array<[string, Booking]>>;
+    getBookingsForTaker(): Promise<Array<[string, Booking]>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getMessagesWithUser(user: Principal): Promise<Array<Message>>;
+    getProviderAvailabilities(): Promise<Array<ProviderAvailability>>;
     getProviderAvailability(provider: Principal): Promise<Array<string>>;
     getProviders(): Promise<Array<ServiceProvider>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;

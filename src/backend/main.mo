@@ -10,7 +10,9 @@ import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   public type UserProfile = {
     name : Text;
@@ -40,6 +42,7 @@ actor {
   };
 
   type Booking = {
+    id : Text;
     taker : Principal;
     service : Text;
     provider : Principal;
@@ -61,16 +64,9 @@ actor {
     availableSlots : [Text];
   };
 
-  module ServiceProvider {
-    public func compare(p1 : ServiceProvider, p2 : ServiceProvider) : { #less; #equal; #greater } {
-      Text.compare(p1.name, p2.name);
-    };
-  };
-
-  module Service {
-    public func compare(s1 : Service, s2 : Service) : { #less; #equal; #greater } {
-      Text.compare(s1.title, s2.title);
-    };
+  type ProviderAvailability = {
+    provider : Principal;
+    availableSlots : [Text];
   };
 
   let providers = Map.empty<Principal, ServiceProvider>();
@@ -82,9 +78,17 @@ actor {
   let userProfiles = Map.empty<Principal, UserProfile>();
 
   let accessControlState = AccessControl.initState();
-
   include MixinAuthorization(accessControlState);
   include MixinStorage();
+
+  // Function to get ProviderAvailability records
+  public query ({ caller }) func getProviderAvailabilities() : async [ProviderAvailability] {
+    availability.values().toArray().map(
+      func(availability) {
+        { provider = availability.provider; availableSlots = availability.availableSlots };
+      }
+    );
+  };
 
   // User Profile Management (Required by frontend)
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
@@ -116,7 +120,6 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can register as providers");
     };
-    if (providers.containsKey(caller)) { Runtime.trap("This account is already registered as a provider") };
 
     let provider : ServiceProvider = {
       name;
@@ -185,7 +188,21 @@ actor {
 
   public query ({ caller }) func getProviders() : async [ServiceProvider] {
     // Accessible to all users including guests
-    providers.values().toArray().sort();
+    providers.values().toArray();
+  };
+
+  public query ({ caller }) func getBookingsForProvider() : async [(Text, Booking)] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view bookings");
+    };
+
+    let providerBookings = List.empty<(Text, Booking)>();
+    for ((id, booking) in bookings.entries()) {
+      if (booking.provider == caller) {
+        providerBookings.add((id, booking));
+      };
+    };
+    providerBookings.toArray();
   };
 
   // Taker functions
@@ -193,7 +210,6 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can register as takers");
     };
-    if (takers.containsKey(caller)) { Runtime.trap("This account is already registered as a taker") };
 
     let taker : TakerProfile = { name; contactInfo; password };
     takers.add(caller, taker);
@@ -218,6 +234,20 @@ actor {
     userProfiles.add(caller, updatedProfile);
   };
 
+  public query ({ caller }) func getBookingsForTaker() : async [(Text, Booking)] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view bookings");
+    };
+
+    let takerBookings = List.empty<(Text, Booking)>();
+    for ((id, booking) in bookings.entries()) {
+      if (booking.taker == caller) {
+        takerBookings.add((id, booking));
+      };
+    };
+    takerBookings.toArray();
+  };
+
   // Service management
   public shared ({ caller }) func addService(title : Text, description : Text, price : Nat, duration : Nat) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -240,16 +270,16 @@ actor {
   };
 
   public query ({ caller }) func searchServicesByKeyword(keyword : Text) : async [Service] {
-    // Accessible to all users including guests
-    switch (services.get(keyword)) {
-      case (null) { [] };
-      case (?serviceFound) { [serviceFound] };
-    };
+    services.values().toArray().filter(
+      func(service) {
+        service.title.contains(#text keyword) or service.description.contains(#text keyword)
+      }
+    );
   };
 
   public query ({ caller }) func getAllServices() : async [Service] {
     // Accessible to all users including guests
-    services.values().toArray().sort();
+    services.values().toArray();
   };
 
   public shared ({ caller }) func makeBooking(serviceTitle : Text, startTime : Time.Time, endTime : Time.Time) : async () {
@@ -268,6 +298,7 @@ actor {
       case (?service) {
         let bookingId = serviceTitle # caller.toText() # startTime.toText();
         let booking : Booking = {
+          id = bookingId;
           taker = caller;
           service = serviceTitle;
           provider = service.provider;
@@ -386,6 +417,7 @@ actor {
         };
 
         let updatedBooking : Booking = {
+          id = booking.id;
           taker = booking.taker;
           service = booking.service;
           provider = booking.provider;
@@ -397,5 +429,55 @@ actor {
         bookings.add(bookingId, updatedBooking);
       };
     };
+  };
+
+  // Additional admin functions
+  public query ({ caller }) func getAdminStats() : async {
+    totalUsers : Nat;
+    totalProviders : Nat;
+    totalTakers : Nat;
+    totalBookings : Nat;
+    totalRevenue : Nat;
+  } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can access admin stats");
+    };
+
+    var totalRevenue = 0;
+    for ((_, booking) in bookings.entries()) {
+      totalRevenue += booking.price;
+    };
+
+    {
+      totalUsers = userProfiles.size();
+      totalProviders = providers.size();
+      totalTakers = takers.size();
+      totalBookings = bookings.size();
+      totalRevenue;
+    };
+  };
+
+  public query ({ caller }) func getAllUsers() : async [(Principal, UserProfile)] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can access all users");
+    };
+
+    let usersList = List.empty<(Principal, UserProfile)>();
+    for ((principal, profile) in userProfiles.entries()) {
+      usersList.add((principal, profile));
+    };
+    usersList.toArray();
+  };
+
+  public query ({ caller }) func getAllBookings() : async [(Text, Booking)] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can access all bookings");
+    };
+
+    let bookingsList = List.empty<(Text, Booking)>();
+    for ((id, booking) in bookings.entries()) {
+      bookingsList.add((id, booking));
+    };
+    bookingsList.toArray();
   };
 };

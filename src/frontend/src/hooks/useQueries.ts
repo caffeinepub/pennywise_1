@@ -1,6 +1,7 @@
 import type { Principal } from "@dfinity/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  Booking,
   Message,
   Service,
   ServiceProvider,
@@ -260,5 +261,76 @@ export function useAddRating() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["providers"] });
     },
+  });
+}
+
+export function useGetBookingsForProvider() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Array<[string, Booking]>>({
+    queryKey: ["bookings", "provider"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getBookingsForProvider();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetBookingsForTaker() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Array<[string, Booking]>>({
+    queryKey: ["bookings", "taker"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getBookingsForTaker();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAdminStats() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<{
+    totalTakers: bigint;
+    totalBookings: bigint;
+    totalProviders: bigint;
+    totalUsers: bigint;
+    totalRevenue: bigint;
+  }>({
+    queryKey: ["adminStats"],
+    queryFn: async () => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.getAdminStats();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllUsers() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Array<[Principal, UserProfile]>>({
+    queryKey: ["allUsers"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllUsers();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllBookings() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Array<[string, Booking]>>({
+    queryKey: ["allBookings"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllBookings();
+    },
+    enabled: !!actor && !isFetching,
   });
 }
